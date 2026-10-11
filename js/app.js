@@ -17,7 +17,7 @@ let state = {
         { id: 4, name: "Tandir Issiq Noni (1 dona)", price: 5000, count: 3, image: "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=600&q=80" }
       ],
       total: 47000,
-      location: { lat: 41.311081, lng: 69.240562 },
+      location: { lat: 41.378333, lng: 60.363889 },
       status: "in_delivery", // in_delivery, completed, canceled
       date: new Date().toLocaleDateString()
     }
@@ -50,9 +50,9 @@ let state = {
   isAdmin: JSON.parse(localStorage.getItem('sifat_is_admin')) || false,
   currentLang: localStorage.getItem('sifat_lang') || 'uz',
   
-  // Koordinatalar
-  userOrderCoords: [41.311081, 69.240562], // Standart Toshkent
-  courierCoords: [41.311400, 69.240800],   // Kuryer nuqtasi (yaqin joyda)
+  // Koordinatalar: Standart har doim Xiva shahrida (Khiva)
+  userOrderCoords: [41.378333, 60.363889], // Xiva markazi (Ichan Qal'a)
+  courierCoords: [41.379500, 60.365500],   // Kuryer nuqtasi (Xiva)
   
   // Carousel holati
   currentSlideIndex: 0,
@@ -108,12 +108,38 @@ function applyLanguage(lang) {
     }
   });
 
-  // Tugmalarning active holati
-  document.querySelectorAll('.lang-btn').forEach(btn => {
-    if (btn.getAttribute('data-lang') === lang) {
-      btn.classList.add('active');
+  // Til meta ma'lumotlari (bayroq va nomlar)
+  const langMeta = {
+    uz: { flag: '🇺🇿', short: "O'zbek", full: "O'zbek tili" },
+    ru: { flag: '🇷🇺', short: "Русский", full: "Русский язык" },
+    en: { flag: '🇬🇧', short: "English", full: "English" }
+  };
+  const activeMeta = langMeta[lang] || langMeta['uz'];
+
+  // Header til tugmasini yangilash
+  const activeLangFlag = document.getElementById('activeLangFlag');
+  const activeLangText = document.getElementById('activeLangText');
+  if (activeLangFlag) activeLangFlag.textContent = activeMeta.flag;
+  if (activeLangText) activeLangText.textContent = activeMeta.short;
+
+  // Profil til tugmasini yangilash
+  const profileFlag = document.getElementById('profileActiveLangFlag');
+  const profileText = document.getElementById('profileActiveLangText');
+  if (profileFlag) profileFlag.textContent = activeMeta.flag;
+  if (profileText) profileText.textContent = activeMeta.full;
+
+  // Admin profil til tugmasini yangilash
+  const adminFlag = document.getElementById('adminActiveLangFlag');
+  const adminText = document.getElementById('adminActiveLangText');
+  if (adminFlag) adminFlag.textContent = activeMeta.flag;
+  if (adminText) adminText.textContent = activeMeta.full;
+
+  // Dropdown menyularidagi active elementlarni belgilash
+  document.querySelectorAll('.lang-menu-item').forEach(item => {
+    if (item.getAttribute('data-lang') === lang) {
+      item.classList.add('active');
     } else {
-      btn.classList.remove('active');
+      item.classList.remove('active');
     }
   });
 
@@ -124,6 +150,56 @@ function applyLanguage(lang) {
   renderUserOrders();
   renderAdminOrders();
   updateHeaderAuthState();
+}
+
+function initLanguageDropdowns() {
+  const dropdownPairs = [
+    { btnId: 'btnLangDropdown', menuId: 'headerLangMenu' },
+    { btnId: 'btnProfileLangDropdown', menuId: 'profileLangMenu' },
+    { btnId: 'btnAdminLangDropdown', menuId: 'adminLangMenu' }
+  ];
+
+  const closeAllLangMenus = () => {
+    document.querySelectorAll('.lang-dropdown-menu').forEach(menu => {
+      menu.classList.remove('open');
+    });
+    document.querySelectorAll('.btn-lang-trigger').forEach(btn => {
+      btn.classList.remove('dropdown-open');
+    });
+  };
+
+  dropdownPairs.forEach(({ btnId, menuId }) => {
+    const btn = document.getElementById(btnId);
+    const menu = document.getElementById(menuId);
+    if (btn && menu) {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = menu.classList.contains('open');
+        closeAllLangMenus();
+        if (!isOpen) {
+          menu.classList.add('open');
+          btn.classList.add('dropdown-open');
+        }
+      });
+    }
+  });
+
+  // Har qanday til bandi bosilganda tilni o'zgartirish va menyuni yopish
+  document.querySelectorAll('.lang-menu-item').forEach(item => {
+    item.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const lang = item.getAttribute('data-lang');
+      if (lang) {
+        applyLanguage(lang);
+      }
+      closeAllLangMenus();
+    });
+  });
+
+  // Tashqariga bosilganda dropdown menyuni yopish
+  document.addEventListener('click', () => {
+    closeAllLangMenus();
+  });
 }
 
 // ========================================================
@@ -302,22 +378,74 @@ function createProductCardHtml(product) {
 // ========================================================
 // 5. JONLI QIDIRUV (LIVE SEARCH)
 // ========================================================
+// ========================================================
+// 5. JONLI QIDIRUV (LIVE SEARCH) VA MAXFIY ADMIN KIRISH
+// ========================================================
 function initSearch() {
   const searchInput = document.getElementById('globalSearchInput');
   const clearBtn = document.getElementById('searchClearBtn');
+  const searchContainer = document.getElementById('headerSearchContainer');
+  const searchIconBtn = document.getElementById('searchIconBtn');
+  const secretAdminBtn = document.getElementById('secretAdminSearchBtn');
+  const secretResultTrigger = document.getElementById('btnSecretAdminTrigger');
+
+  // Mobil qurilmalarda qidiruv bosilganda klaviatura avtomatik ochilishi
+  const activateSearchFocus = () => {
+    if (state.currentView !== 'viewSearch') {
+      switchView('viewSearch');
+    }
+    if (searchInput) {
+      searchInput.focus();
+    }
+  };
+
+  if (searchIconBtn) searchIconBtn.addEventListener('click', activateSearchFocus);
+
+  if (searchContainer) {
+    searchContainer.addEventListener('click', (e) => {
+      if (e.target !== clearBtn && e.target !== secretAdminBtn && !e.target.closest('#secretAdminSearchBtn')) {
+        if (searchInput && document.activeElement !== searchInput) {
+          searchInput.focus();
+        }
+      }
+    });
+  }
+
+  // Maxfiy admin login modali ochilishi
+  const handleOpenAdminLogin = () => {
+    if (state.isAdmin) {
+      switchAdminView('viewAdminHome');
+    } else {
+      openModal('modalAdminLogin');
+      const userInput = document.getElementById('adminUsernameInput');
+      if (userInput) {
+        setTimeout(() => userInput.focus(), 150);
+      }
+    }
+  };
+
+  if (secretAdminBtn) {
+    secretAdminBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      handleOpenAdminLogin();
+    });
+  }
+
+  if (secretResultTrigger) {
+    secretResultTrigger.addEventListener('click', handleOpenAdminLogin);
+  }
 
   if (searchInput) {
     searchInput.addEventListener('input', (e) => {
-      const query = e.target.value.trim().toLowerCase();
-      if (clearBtn) clearBtn.style.display = query ? 'block' : 'none';
+      const rawVal = e.target.value;
+      if (clearBtn) clearBtn.style.display = rawVal.length > 0 ? 'block' : 'none';
 
-      if (query.length > 0) {
-        // Agar boshqa bo'limda bo'lsa, qidiruv sahifasiga o'tkazish
+      if (rawVal.trim().length > 0) {
         if (state.currentView !== 'viewSearch') {
           switchView('viewSearch');
         }
       }
-      renderSearchResults(query);
+      renderSearchResults(rawVal);
     });
 
     searchInput.addEventListener('focus', () => {
@@ -333,6 +461,7 @@ function initSearch() {
         searchInput.value = '';
         clearBtn.style.display = 'none';
         renderSearchResults('');
+        searchInput.focus();
       }
     });
   }
@@ -342,10 +471,30 @@ function renderSearchResults(query = '') {
   const grid = document.getElementById('searchResultsGrid');
   const noFound = document.getElementById('noSearchFound');
   const header = document.getElementById('searchResultHeader');
+  const secretCard = document.getElementById('secretAdminResultCard');
+  const secretSearchBtn = document.getElementById('secretAdminSearchBtn');
   if (!grid) return;
 
   const searchInput = document.getElementById('globalSearchInput');
-  const currentQuery = query || (searchInput ? searchInput.value.trim().toLowerCase() : '');
+  const currentQuery = (typeof query === 'string' ? query : (searchInput ? searchInput.value : '')).trim().toLowerCase();
+
+  // TALABGA BINOAN: faqat va faqat to'liq "sifat market admin" yozilgandagina admin tugmasi chiqadi!
+  const isSecretAdmin = (currentQuery === 'sifat market admin');
+
+  if (isSecretAdmin) {
+    if (secretSearchBtn) secretSearchBtn.style.display = 'inline-flex';
+    if (secretCard) secretCard.style.display = 'block';
+    if (header) {
+      header.innerHTML = `<i class="fa-solid fa-user-shield" style="color: #7000ff;"></i> Maxfiy Admin Portali topildi!`;
+    }
+    grid.innerHTML = '';
+    if (noFound) noFound.style.display = 'none';
+    return;
+  } else {
+    // Agar to'liq yozilmagan bo'lsa yoki boshqa so'z bo'lsa - admin tugmasi mutlaqo ko'rinmaydi!
+    if (secretSearchBtn) secretSearchBtn.style.display = 'none';
+    if (secretCard) secretCard.style.display = 'none';
+  }
 
   let filtered = state.products;
   if (currentQuery) {
@@ -490,12 +639,13 @@ function renderCart() {
   }
 }
 
-// Savatdagi Leaflet xaritasini boshlash
+// Savatdagi Leaflet xaritasini boshlash (Standart har doim Xiva)
 function initUserOrderMap() {
   const mapEl = document.getElementById('userOrderMap');
   if (!mapEl || userOrderMap) return;
 
-  userOrderMap = L.map('userOrderMap').setView(state.userOrderCoords, 14);
+  // Xiva markazi bo'yicha markazlashtirish (Standart)
+  userOrderMap = L.map('userOrderMap').setView(state.userOrderCoords, 15);
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
@@ -503,40 +653,110 @@ function initUserOrderMap() {
   }).addTo(userOrderMap);
 
   userOrderMarker = L.marker(state.userOrderCoords, { draggable: true }).addTo(userOrderMap);
+  userOrderMarker.bindPopup("<b>📍 Xiva markazi (Ichan Qal'a)</b><br>Yetkazib berish manzili").openPopup();
 
   userOrderMarker.on('dragend', function (e) {
     const pos = e.target.getLatLng();
-    updateSelectedUserCoords(pos.lat, pos.lng);
+    updateSelectedUserCoords(pos.lat, pos.lng, "Xaritadan tanlangan manzil");
   });
 
   userOrderMap.on('click', function (e) {
     userOrderMarker.setLatLng(e.latlng);
-    updateSelectedUserCoords(e.latlng.lat, e.latlng.lng);
+    updateSelectedUserCoords(e.latlng.lat, e.latlng.lng, "Xaritadan tanlangan manzil");
   });
 
-  // GPS "Mening joylashuvim" tugmasi
+  // Lupa orqali foydalanuvchining turgan joyini aniqlash va xaritada belgilash funksiyasi
+  const locateUserPositionAndMark = (btnEl) => {
+    if (!navigator.geolocation) {
+      alert("Brauzeringiz geolokatsiyani qo'llab-quvvatlamaydi.");
+      return;
+    }
+
+    const prevHtml = btnEl ? btnEl.innerHTML : '';
+    if (btnEl) {
+      btnEl.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Aniqlanmoqda...</span>`;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        userOrderMap.setView([lat, lng], 17);
+        userOrderMarker.setLatLng([lat, lng]);
+        userOrderMarker.bindPopup("<b>📍 Sizning turgan joyingiz!</b><br>Manzil xaritada muvaffaqiyatli belgilandi").openPopup();
+        updateSelectedUserCoords(lat, lng, "Sizning turgan joyingiz (GPS orqali)");
+
+        if (btnEl) btnEl.innerHTML = prevHtml;
+      },
+      (err) => {
+        alert("GPS orqali joylashuvni aniqlashga ruxsat berilmadi yoki xatolik yuz berdi. Xaritadan nuqtani o'zingiz belgilashingiz mumkin.");
+        if (btnEl) btnEl.innerHTML = prevHtml;
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  };
+
+  // 1. Manzil qidirish va lupa orqali belgilash
+  const searchAddressInput = document.getElementById('mapAddressSearchInput');
+  const btnMapSearchLupa = document.getElementById('btnMapSearchLupa');
+
+  const executeMapAddressSearch = async () => {
+    const query = searchAddressInput ? searchAddressInput.value.trim() : '';
+    if (!query) {
+      // Agar qidiruv maydoni bo'sh bo'lsa, lupani bosganda turgan joyini belgilaydi
+      locateUserPositionAndMark(btnMapSearchLupa);
+      return;
+    }
+
+    if (btnMapSearchLupa) btnMapSearchLupa.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`;
+
+    try {
+      const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ', Khiva, Uzbekistan')}&limit=1`);
+      const data = await resp.json();
+      if (data && data.length > 0) {
+        const lat = parseFloat(data[0].lat);
+        const lng = parseFloat(data[0].lon);
+        const displayName = data[0].display_name;
+        userOrderMap.setView([lat, lng], 16);
+        userOrderMarker.setLatLng([lat, lng]);
+        userOrderMarker.bindPopup(`<b>📍 ${query}</b><br>${displayName}`).openPopup();
+        updateSelectedUserCoords(lat, lng, displayName);
+      } else {
+        alert(`"${query}" manzili topilmadi. Xaritadan o'zingiz tanlashingiz mumkin.`);
+      }
+    } catch (err) {
+      alert("Manzilni qidirishda xatolik yuz berdi. Xaritadan to'g'ridan-to'g'ri belgilang.");
+    } finally {
+      if (btnMapSearchLupa) btnMapSearchLupa.innerHTML = `<i class="fa-solid fa-magnifying-glass"></i> <span>Qidirish</span>`;
+    }
+  };
+
+  if (btnMapSearchLupa) {
+    btnMapSearchLupa.addEventListener('click', executeMapAddressSearch);
+  }
+
+  if (searchAddressInput) {
+    searchAddressInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        executeMapAddressSearch();
+      }
+    });
+  }
+
+  // 2. Turgan joyimni belgilash tugmasi (Lupa)
   const geolocateBtn = document.getElementById('btnGeolocateUser');
   if (geolocateBtn) {
     geolocateBtn.addEventListener('click', () => {
-      if (navigator.geolocation) {
-        geolocateBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Aniqlanmoqda...`;
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const lat = position.coords.latitude;
-            const lng = position.coords.longitude;
-            userOrderMap.setView([lat, lng], 16);
-            userOrderMarker.setLatLng([lat, lng]);
-            updateSelectedUserCoords(lat, lng);
-            geolocateBtn.innerHTML = `<i class="fa-solid fa-crosshairs"></i> ${t('useMyLocation')}`;
-          },
-          (err) => {
-            alert("Joylashuvni aniqlashga ruxsat berilmadi yoki xatolik yuz berdi. Xaritadan belgilang.");
-            geolocateBtn.innerHTML = `<i class="fa-solid fa-crosshairs"></i> ${t('useMyLocation')}`;
-          }
-        );
-      } else {
-        alert("Brauzeringiz geolokatsiyani qo'llab-quvvatlamaydi.");
-      }
+      locateUserPositionAndMark(geolocateBtn);
+    });
+  }
+
+  // 3. Xarita ustidagi suzuvchi tezkor Lupa tugmasi
+  const quickMapLupaBtn = document.getElementById('btnQuickMapLupa');
+  if (quickMapLupaBtn) {
+    quickMapLupaBtn.addEventListener('click', () => {
+      locateUserPositionAndMark(quickMapLupaBtn);
     });
   }
 
@@ -547,11 +767,15 @@ function initUserOrderMap() {
   }
 }
 
-function updateSelectedUserCoords(lat, lng) {
+function updateSelectedUserCoords(lat, lng, label = "") {
   state.userOrderCoords = [lat, lng];
   const coordText = document.getElementById('userSelectedCoordText');
+  const addressText = document.getElementById('userSelectedAddressName');
   if (coordText) {
-    coordText.textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+    coordText.textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)} (Xiva)`;
+  }
+  if (addressText && label) {
+    addressText.textContent = label;
   }
 }
 
@@ -583,10 +807,32 @@ function handleConfirmOrder() {
     date: new Date().toLocaleDateString()
   };
 
+  // 1. Buyurtmani saqlash
   state.orders.unshift(newOrder);
   localStorage.setItem('sifat_orders', JSON.stringify(state.orders));
 
-  // Savatni tozalash
+  // 2. Ushbu buyurtmani faqat shu mijozga tegishli qilib belgilash (admindan va o'zidan boshqaga ko'rinmaydi)
+  addMyOrderId(newOrder.id);
+
+  // 3. TALABGA BINOAN: Buyurtma qilingan mahsulotlar saytdan/katalogdan butunlay yo'qolib ketsin!
+  const orderedProductIds = state.cart.map(item => item.id);
+  state.products = state.products.filter(p => !orderedProductIds.includes(p.id));
+  localStorage.setItem('sifat_products', JSON.stringify(state.products));
+
+  // 4. TALABGA BINOAN: Zakaz bergan paytda "Sizning buyurtmangiz yo'lga chiqyapti" deb sobsheniye kelsin!
+  const notificationMsgText = `Sizning #${newOrder.id} raqamli buyurtmangiz qabul qilindi va yo'lga chiqyapti! Kuryer Xiva markazidan siz tomon yo'l oldi.`;
+  state.messages.push({
+    id: Date.now(),
+    customerName: name,
+    customerPhone: phone,
+    text: notificationMsgText,
+    fromAdmin: true,
+    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    read: false
+  });
+  localStorage.setItem('sifat_messages', JSON.stringify(state.messages));
+
+  // 5. Savatni tozalash
   state.cart = [];
   saveCart();
   renderCart();
@@ -594,16 +840,103 @@ function handleConfirmOrder() {
   renderSearchResults();
   updateCartBadge();
 
-  // Buyurtmalar bo'limini yangilash
+  // 6. Buyurtmalar ro'yxatini yangilash
   renderUserOrders();
   renderAdminOrders();
 
-  alert(`Buyurtmangiz qabul qilindi! Buyurtma raqami: #${newOrder.id}. Kuryer yo'lga chiqdi.`);
-  
+  // 7. Ekranda ovozli jonli Sobsheniye (Toast bildirishnoma) chiqarish:
+  setTimeout(() => {
+    showOrderNotificationToast(
+      "Sifat Market Kuryer",
+      "Sizning buyurtmangiz yo'lga chiqyapti! Kuryer siz tomon yo'l oldi.",
+      newOrder.id
+    );
+  }, 400);
+
   // Profil bo'limidagi buyurtmalarni ochish
   switchView('viewProfile');
   const ordersBox = document.getElementById('userOrdersListContainer');
   if (ordersBox) ordersBox.style.display = 'block';
+}
+
+// Ovozli bildirishnoma va jonli Sobsheniye chiqarish funksiyasi
+function playNotificationSound() {
+  try {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (AudioContextClass) {
+      const audioCtx = new AudioContextClass();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
+      osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.1); // A5
+      gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.35);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.35);
+    }
+  } catch (e) {
+    // Audio context xatoliksiz o'tadi
+  }
+}
+
+function showOrderNotificationToast(title, message, orderId) {
+  playNotificationSound();
+
+  let toast = document.getElementById('orderNotificationToast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'orderNotificationToast';
+    toast.className = 'order-notification-toast';
+    document.body.appendChild(toast);
+  }
+
+  toast.innerHTML = `
+    <div class="toast-content" onclick="switchView('viewProfile'); this.parentElement.classList.remove('show');">
+      <div class="toast-avatar">
+        <i class="fa-solid fa-truck-fast"></i>
+      </div>
+      <div class="toast-body">
+        <div class="toast-header-line">
+          <span class="toast-sender">${title}</span>
+          <span class="toast-time">hozirgina</span>
+        </div>
+        <div class="toast-message">${message}</div>
+      </div>
+      <button type="button" class="toast-close-btn" onclick="event.stopPropagation(); this.closest('.order-notification-toast').classList.remove('show');" title="Yopish">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+  `;
+
+  // Animatsiya bilan ekranga chiqarish
+  setTimeout(() => {
+    toast.classList.add('show');
+  }, 100);
+
+  // 8 soniyadan so'ng avtomatik yopilish
+  setTimeout(() => {
+    if (toast) toast.classList.remove('show');
+  }, 8000);
+}
+
+// Mijozning shaxsiy buyurtmalarini tekshirish yordamchi funksiyalari
+function getMyOrderIds() {
+  try {
+    return JSON.parse(localStorage.getItem('sifat_my_order_ids')) || [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function addMyOrderId(orderId) {
+  const ids = getMyOrderIds();
+  if (!ids.includes(orderId)) {
+    ids.push(orderId);
+    localStorage.setItem('sifat_my_order_ids', JSON.stringify(ids));
+  }
 }
 
 // ========================================================
@@ -614,9 +947,18 @@ function renderUserOrders() {
   const badge = document.getElementById('activeOrdersCountBadge');
   if (!container) return;
 
-  const userPhone = state.currentUser.phone;
-  // Barcha yoki shu foydalanuvchiga tegishli buyurtmalar
-  const myOrders = state.orders;
+  // TALABGA BINOAN: Zakaz qilingan narsalar o'zi bilan admindan boshqa odamga ko'rinmasin!
+  const myOrderIds = getMyOrderIds();
+  const userPhoneClean = (state.currentUser && state.currentUser.phone ? state.currentUser.phone : '').replace(/\D/g, '');
+
+  const myOrders = state.orders.filter(order => {
+    // 1. Shu qurilmadan/foydalanuvchidan buyurtma berilganmi
+    if (myOrderIds.includes(order.id)) return true;
+    // 2. Yoki telefon raqami mos keladimi
+    const orderPhoneClean = (order.customerPhone || '').replace(/\D/g, '');
+    if (userPhoneClean && orderPhoneClean && userPhoneClean === orderPhoneClean) return true;
+    return false;
+  });
 
   const activeCount = myOrders.filter(o => o.status === 'in_delivery').length;
   if (badge) {
@@ -629,7 +971,13 @@ function renderUserOrders() {
   }
 
   if (myOrders.length === 0) {
-    container.innerHTML = `<p style="color:#94a3b8; font-size:0.9rem; padding:10px 0;">Hozircha buyurtmalaringiz yo'q.</p>`;
+    container.innerHTML = `
+      <div style="text-align: center; padding: 24px 10px; color: #94a3b8;">
+        <i class="fa-solid fa-box-open" style="font-size: 2.2rem; color: #cbd5e1; margin-bottom: 8px; display: block;"></i>
+        <p style="font-size: 0.92rem; font-weight: 600; color: #64748b;">Hozircha sizda buyurtmalar mavjud emas.</p>
+        <p style="font-size: 0.8rem; color: #94a3b8; margin-top: 4px;">Buyurtma berganingizdan so'ng, faqat o'zingizga tegishli zakazlar shu yerda ko'rinadi.</p>
+      </div>
+    `;
     return;
   }
 
@@ -702,26 +1050,21 @@ function initAuth() {
   const formUserAuth = document.getElementById('formUserAuth');
   const adminLogoutBtn = document.getElementById('adminLogoutBtn');
 
-  // Modal ochish
+  // Modal ochish (TALABGA BINOAN: ro'yxatdan o'tish tugmasidan admin butunlay olib tashlandi!)
   const openAuthChooser = () => {
     if (state.isAdmin) {
       // Agar admin bo'lsa, admin paneliga olib borish
       switchAdminView('viewAdminHome');
+    } else if (state.currentUser.isLoggedIn) {
+      switchView('viewProfile');
     } else {
-      openModal('modalAuthType');
+      // To'g'ridan-to'g'ri foydalanuvchi ro'yxatdan o'tish modali ochiladi
+      openModal('modalUserAuth');
     }
   };
 
   if (headerAuthBtn) headerAuthBtn.addEventListener('click', openAuthChooser);
   if (profileAuthActionBtn) profileAuthActionBtn.addEventListener('click', openAuthChooser);
-
-  // Admin tanlansa
-  if (btnSelectAdmin) {
-    btnSelectAdmin.addEventListener('click', () => {
-      closeModal('modalAuthType');
-      openModal('modalAdminLogin');
-    });
-  }
 
   // Foydalanuvchi tanlansa
   if (btnSelectUser) {
@@ -1465,6 +1808,14 @@ function initNavigation() {
     item.addEventListener('click', () => {
       const viewId = item.getAttribute('data-view');
       switchView(viewId);
+
+      // TALABGA BINOAN: pois ga bosganda telefonlarda qlaviturasi ham ochilsin!
+      if (viewId === 'viewSearch') {
+        const searchInput = document.getElementById('globalSearchInput');
+        if (searchInput) {
+          searchInput.focus();
+        }
+      }
     });
   });
 
@@ -1499,14 +1850,6 @@ function initNavigation() {
       if (!isVisible) renderUserOrders();
     });
   }
-
-  // Til tanlash tugmalari
-  document.querySelectorAll('.lang-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      const lang = e.currentTarget.getAttribute('data-lang');
-      applyLanguage(lang);
-    });
-  });
 }
 
 function switchView(viewId) {
@@ -1526,6 +1869,16 @@ function switchView(viewId) {
       item.classList.remove('active');
     }
   });
+
+  // Agar qidiruv sahifasiga o'tsa - mobil klaviatura ochilishi uchun fokus
+  if (viewId === 'viewSearch') {
+    const searchInput = document.getElementById('globalSearchInput');
+    if (searchInput) {
+      setTimeout(() => {
+        searchInput.focus();
+      }, 50);
+    }
+  }
 
   // Agar savat bo'lsa xaritani render qilish
   if (viewId === 'viewCart') {
@@ -1607,6 +1960,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initBannerForm();
   initProductUpload();
   initChatSystem();
+  initLanguageDropdowns();
 
   // Boshlang'ich renderlar
   applyLanguage(state.currentLang);

@@ -38,25 +38,61 @@
       </div>
 
       <!-- Live Search Bar -->
-      <div class="search-container">
+      <div class="search-container" id="headerSearchContainer">
         <div class="search-input-wrapper">
-          <i class="fa-solid fa-magnifying-glass search-icon"></i>
+          <i class="fa-solid fa-magnifying-glass search-icon" id="searchIconBtn"></i>
           <input 
-            type="text" 
+            type="search" 
             id="globalSearchInput" 
             class="search-input" 
             placeholder="Mahsulotlarni qidirish (masalan: olma, sut, non)..."
             data-i18n-attr="placeholder:searchPlaceholder"
             autocomplete="off"
+            autocorrect="off"
+            autocapitalize="off"
+            spellcheck="false"
+            inputmode="search"
+            enterkeyhint="search"
           />
+          <!-- Maxfiy Admin tugmasi (faqat to'liq 'sifat market admin' yozilganda chiqadi) -->
+          <button type="button" class="secret-admin-search-btn" id="secretAdminSearchBtn" style="display: none;" title="Admin Panelga Kirish">
+            <i class="fa-solid fa-user-shield"></i>
+            <span>Admin</span>
+          </button>
           <button class="search-clear-btn" id="searchClearBtn" title="Tozalash">
             <i class="fa-solid fa-circle-xmark"></i>
           </button>
         </div>
       </div>
 
-      <!-- Auth / Profile Action in Header -->
+      <!-- Auth & Language Actions in Header -->
       <div class="header-actions">
+        <!-- Tillarni bir qnopkaga o'tirish va menyu chiqishi -->
+        <div class="lang-dropdown-wrapper" id="headerLangDropdown">
+          <button type="button" class="btn-lang-trigger" id="btnLangDropdown" aria-label="Sayt tili">
+            <span class="active-lang-flag" id="activeLangFlag">🇺🇿</span>
+            <span class="active-lang-text" id="activeLangText">O'zbek</span>
+            <i class="fa-solid fa-chevron-down lang-chevron"></i>
+          </button>
+          <div class="lang-dropdown-menu" id="headerLangMenu">
+            <button type="button" class="lang-menu-item active" data-lang="uz">
+              <span class="lang-item-flag">🇺🇿</span>
+              <span class="lang-item-title">O'zbek tili</span>
+              <i class="fa-solid fa-check lang-item-check"></i>
+            </button>
+            <button type="button" class="lang-menu-item" data-lang="ru">
+              <span class="lang-item-flag">🇷🇺</span>
+              <span class="lang-item-title">Русский</span>
+              <i class="fa-solid fa-check lang-item-check"></i>
+            </button>
+            <button type="button" class="lang-menu-item" data-lang="en">
+              <span class="lang-item-flag">🇬🇧</span>
+              <span class="lang-item-title">English</span>
+              <i class="fa-solid fa-check lang-item-check"></i>
+            </button>
+          </div>
+        </div>
+
         <button class="btn-header-auth" id="headerAuthBtn">
           <i class="fa-regular fa-user"></i>
           <span id="headerAuthText" data-i18n="loginRegister">Kirish / Ro'yxatdan o'tish</span>
@@ -148,6 +184,27 @@
           </h2>
         </div>
         
+        <!-- Maxfiy Admin Kartasi (faqat qidiruvda 'sifat market admin' yozilganda chiqadi) -->
+        <div id="secretAdminResultCard" class="secret-admin-portal-card" style="display: none;">
+          <div class="secret-portal-glow"></div>
+          <div class="secret-portal-header">
+            <div class="secret-portal-badge">
+              <i class="fa-solid fa-shield-halved"></i>
+              <span data-i18n="secretAdminFound">Maxfiy Admin Portali</span>
+            </div>
+            <div class="secret-live-dot"></div>
+          </div>
+          <h3 class="secret-portal-title">Sifat Market Administrator Tizimi</h3>
+          <p class="secret-portal-desc" data-i18n="secretAdminDesc">
+            Admin boshqaruv paneliga kirish uchun quyidagi tugmani bosing.
+          </p>
+          <button type="button" id="btnSecretAdminTrigger" class="btn-secret-portal-action">
+            <i class="fa-solid fa-unlock-keyhole"></i>
+            <span data-i18n="secretAdminBtn">Admin Panelga Kirish</span>
+            <i class="fa-solid fa-arrow-right-long"></i>
+          </button>
+        </div>
+
         <div class="product-grid" id="searchResultsGrid">
           <!-- Qidiruv natijalari -->
         </div>
@@ -185,25 +242,57 @@
             </div>
           </div>
 
-          <!-- Xarita orqali yetkazib berish joyini tanlash -->
+          <!-- Xarita orqali yetkazib berish joyini tanlash (Standart Xiva) -->
           <div class="map-selector-box">
             <div class="map-selector-title">
               <i class="fa-solid fa-location-dot"></i>
               <span data-i18n="orderLocationPrompt">Xaritadan yetkazish manzilini belgilang</span>
             </div>
 
-            <button type="button" class="btn-my-location" id="btnGeolocateUser">
-              <i class="fa-solid fa-crosshairs"></i>
-              <span data-i18n="useMyLocation">Mening joylashuvimni aniqlash</span>
-            </button>
+            <!-- Manzil qidirish va Lupa orqali joylashuvni belgilash -->
+            <div class="map-search-bar-wrapper">
+              <div class="map-search-input-box">
+                <i class="fa-solid fa-magnifying-glass search-map-icon"></i>
+                <input 
+                  type="text" 
+                  id="mapAddressSearchInput" 
+                  class="map-search-input" 
+                  placeholder="Xiva bo'ylab manzil yoki ko'cha qidirish..." 
+                  autocomplete="off"
+                />
+                <button type="button" id="btnMapSearchLupa" class="btn-map-action-lupa" title="Lupa bilan qidirish">
+                  <i class="fa-solid fa-magnifying-glass"></i>
+                  <span>Qidirish</span>
+                </button>
+              </div>
 
-            <!-- Interaktiv Xarita -->
-            <div id="userOrderMap" class="map-container"></div>
+              <!-- Lupa orqali turgan joyini aniqlash va belgilash tugmasi -->
+              <button type="button" class="btn-lupa-locate" id="btnGeolocateUser" title="GPS orqali turgan joyingizni aniqlash va xaritada belgilash">
+                <i class="fa-solid fa-location-crosshairs"></i>
+                <span>Turgan joyimni belgilash</span>
+              </button>
+            </div>
+
+            <!-- Interaktiv Xarita (Xiva) -->
+            <div class="map-canvas-wrapper">
+              <div id="userOrderMap" class="map-container"></div>
+              <!-- Floating Lupa Quick Button on Map -->
+              <button type="button" id="btnQuickMapLupa" class="floating-map-lupa-btn" title="Turgan joyingizni avtomatik belgilash">
+                <i class="fa-solid fa-crosshairs"></i>
+                <span class="floating-lupa-text">Turgan joyim</span>
+              </button>
+            </div>
 
             <div class="location-details-box">
-              <strong data-i18n="selectedCoords">Belgilangan manzil koordinatalari:</strong>
-              <div id="userSelectedCoordText" style="color: var(--primary); font-weight: 600; margin-top: 4px;">
-                41.311081, 69.240562 (Toshkent markazi)
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                <strong data-i18n="selectedCoords">Belgilangan manzil koordinatalari:</strong>
+                <span class="badge-city-khiva"><i class="fa-solid fa-city"></i> Xiva</span>
+              </div>
+              <div id="userSelectedCoordText" style="color: var(--primary); font-weight: 700; margin-top: 5px; font-size: 0.95rem;">
+                41.378333, 60.363889 (Xiva markazi - Ichan Qal'a)
+              </div>
+              <div id="userSelectedAddressName" style="color: #64748b; font-size: 0.82rem; margin-top: 3px;">
+                Xiva shahri, Xorazm viloyati
               </div>
             </div>
 
@@ -277,13 +366,34 @@
           <i class="fa-solid fa-chevron-right" style="color: #94a3b8; font-size: 0.85rem;"></i>
         </div>
 
-        <!-- Sayt tilini o'zgartirish -->
+        <!-- Sayt tilini o'zgartirish (Bitta tugma va menyu) -->
         <div class="profile-card">
-          <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 8px;" data-i18n="changeLang">Sayt tilini o'zgartirish</h4>
-          <div class="lang-selector-box">
-            <button class="lang-btn active" data-lang="uz">🇺🇿 O'zbek tili</button>
-            <button class="lang-btn" data-lang="ru">🇷🇺 Русский</button>
-            <button class="lang-btn" data-lang="en">🇬🇧 English</button>
+          <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 10px;" data-i18n="changeLang">Sayt tilini o'zgartirish</h4>
+          <div class="lang-dropdown-wrapper profile-dropdown-wrapper" id="profileLangDropdown">
+            <button type="button" class="btn-lang-trigger profile-lang-btn" id="btnProfileLangDropdown">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="active-lang-flag" id="profileActiveLangFlag">🇺🇿</span>
+                <span class="active-lang-text" id="profileActiveLangText">O'zbek tili</span>
+              </div>
+              <i class="fa-solid fa-chevron-down lang-chevron"></i>
+            </button>
+            <div class="lang-dropdown-menu" id="profileLangMenu">
+              <button type="button" class="lang-menu-item active" data-lang="uz">
+                <span class="lang-item-flag">🇺🇿</span>
+                <span class="lang-item-title">O'zbek tili</span>
+                <i class="fa-solid fa-check lang-item-check"></i>
+              </button>
+              <button type="button" class="lang-menu-item" data-lang="ru">
+                <span class="lang-item-flag">🇷🇺</span>
+                <span class="lang-item-title">Русский</span>
+                <i class="fa-solid fa-check lang-item-check"></i>
+              </button>
+              <button type="button" class="lang-menu-item" data-lang="en">
+                <span class="lang-item-flag">🇬🇧</span>
+                <span class="lang-item-title">English</span>
+                <i class="fa-solid fa-check lang-item-check"></i>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -446,13 +556,34 @@
           </div>
         </div>
 
-        <!-- Sayt tilini o'zgartirish -->
+        <!-- Sayt tilini o'zgartirish (Bitta tugma va menyu) -->
         <div class="profile-card">
-          <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 8px;" data-i18n="changeLang">Sayt tilini o'zgartirish</h4>
-          <div class="lang-selector-box">
-            <button class="lang-btn active" data-lang="uz">🇺🇿 O'zbek tili</button>
-            <button class="lang-btn" data-lang="ru">🇷🇺 Русский</button>
-            <button class="lang-btn" data-lang="en">🇬🇧 English</button>
+          <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 10px;" data-i18n="changeLang">Sayt tilini o'zgartirish</h4>
+          <div class="lang-dropdown-wrapper profile-dropdown-wrapper" id="adminLangDropdown">
+            <button type="button" class="btn-lang-trigger profile-lang-btn" id="btnAdminLangDropdown">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="active-lang-flag" id="adminActiveLangFlag">🇺🇿</span>
+                <span class="active-lang-text" id="adminActiveLangText">O'zbek tili</span>
+              </div>
+              <i class="fa-solid fa-chevron-down lang-chevron"></i>
+            </button>
+            <div class="lang-dropdown-menu" id="adminLangMenu">
+              <button type="button" class="lang-menu-item active" data-lang="uz">
+                <span class="lang-item-flag">🇺🇿</span>
+                <span class="lang-item-title">O'zbek tili</span>
+                <i class="fa-solid fa-check lang-item-check"></i>
+              </button>
+              <button type="button" class="lang-menu-item" data-lang="ru">
+                <span class="lang-item-flag">🇷🇺</span>
+                <span class="lang-item-title">Русский</span>
+                <i class="fa-solid fa-check lang-item-check"></i>
+              </button>
+              <button type="button" class="lang-menu-item" data-lang="en">
+                <span class="lang-item-flag">🇬🇧</span>
+                <span class="lang-item-title">English</span>
+                <i class="fa-solid fa-check lang-item-check"></i>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -510,30 +641,21 @@
        MODALS
        ======================================================== -->
   
-  <!-- Modal 1: Kirish turini tanlash ("Adminmisiz yoki Foydalanuvchi?") -->
+  <!-- Modal 1: Kirish / Ro'yxatdan o'tish (Admin tugmasi olib tashlandi) -->
   <div class="modal-backdrop" id="modalAuthType">
     <div class="modal-box">
       <div class="modal-header">
-        <h3 class="modal-title" data-i18n="adminOrUserTitle">Tizimga kirish turini tanlang</h3>
+        <h3 class="modal-title" data-i18n="userAuthTitle">Foydalanuvchi hisobi</h3>
         <button class="modal-close-btn" data-close-modal="modalAuthType">&times;</button>
       </div>
       <div class="modal-body" style="text-align: center; padding: 24px 20px;">
-        <p style="color: #64748b; font-size: 0.95rem; margin-bottom: 20px;" data-i18n="adminOrUserSub">
-          Iltimos, kim sifatida kirishingizni belgilang:
+        <p style="color: #64748b; font-size: 0.95rem; margin-bottom: 20px;">
+          Xarid qilish va buyurtmalarni kuzatish uchun profilingizga kiring:
         </p>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
-          <!-- Admin tugmasi -->
-          <button type="button" id="btnSelectAdmin" style="padding: 18px; border: 2px solid var(--primary); background: var(--primary-light); border-radius: var(--radius-md); cursor: pointer; transition: 0.2s;">
-            <i class="fa-solid fa-user-shield" style="font-size: 2rem; color: var(--primary); margin-bottom: 8px; display: block;"></i>
-            <strong style="font-size: 1rem; color: var(--primary);" data-i18n="iAmAdmin">Admin</strong>
-          </button>
-          
-          <!-- Foydalanuvchi tugmasi -->
-          <button type="button" id="btnSelectUser" style="padding: 18px; border: 2px solid #e2e8f0; background: #ffffff; border-radius: var(--radius-md); cursor: pointer; transition: 0.2s;">
-            <i class="fa-solid fa-user" style="font-size: 2rem; color: #475569; margin-bottom: 8px; display: block;"></i>
-            <strong style="font-size: 1rem; color: #334155;" data-i18n="iAmUser">Foydalanuvchi</strong>
-          </button>
-        </div>
+        <button type="button" id="btnSelectUser" style="width: 100%; padding: 18px; border: 2px solid var(--primary); background: var(--primary-light); border-radius: var(--radius-md); cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 12px;">
+          <i class="fa-solid fa-user" style="font-size: 1.6rem; color: var(--primary);"></i>
+          <strong style="font-size: 1.05rem; color: var(--primary);" data-i18n="loginRegister">Kirish / Ro'yxatdan o'tish</strong>
+        </button>
       </div>
     </div>
   </div>

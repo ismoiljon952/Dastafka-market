@@ -261,7 +261,13 @@ const TRANSLATIONS = {
     instagramFollow: "Instagram sahifamiz",
     allRightsReserved: "Barcha huquqlar himoyalangan.",
     distanceWarning: "Kuryer manzilga yaqinlashdi (50 metr)",
-    distanceCurrent: "Mijozgacha masofa:"
+    distanceCurrent: "Mijozgacha masofa:",
+    secretAdminFound: "Maxfiy Admin Portali",
+    secretAdminBtn: "Admin Panelga Kirish",
+    secretAdminDesc: "Admin boshqaruv paneliga kirish uchun quyidagi tugmani bosing.",
+    langUz: "O'zbek",
+    langRu: "Русский",
+    langEn: "English"
   },
   ru: {
     siteName: "Sifat Market",
@@ -335,7 +341,13 @@ const TRANSLATIONS = {
     instagramFollow: "Наш Instagram",
     allRightsReserved: "Все права защищены.",
     distanceWarning: "Курьер приблизился к месту (50 метров)",
-    distanceCurrent: "Расстояние до клиента:"
+    distanceCurrent: "Расстояние до клиента:",
+    secretAdminFound: "Секретный портал администратора",
+    secretAdminBtn: "Вход в админ-панель",
+    secretAdminDesc: "Нажмите кнопку ниже для входа в панель администратора.",
+    langUz: "O'zbek",
+    langRu: "Русский",
+    langEn: "English"
   },
   en: {
     siteName: "Sifat Market",
@@ -409,6 +421,12 @@ const TRANSLATIONS = {
     instagramFollow: "Our Instagram",
     allRightsReserved: "All rights reserved.",
     distanceWarning: "Courier is close to destination (within 50 meters)",
-    distanceCurrent: "Distance to customer:"
+    distanceCurrent: "Distance to customer:",
+    secretAdminFound: "Secret Admin Portal",
+    secretAdminBtn: "Enter Admin Panel",
+    secretAdminDesc: "Click the button below to access the administrative dashboard.",
+    langUz: "O'zbek",
+    langRu: "Русский",
+    langEn: "English"
   }
 };
